@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CSV/XLSX Analyzer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #e0f7fa;
+      color: #333;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: auto;
+      padding: 20px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 12px 24px;
+      background-color: #0288d1;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      margin-top: 15px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0277bd;
+    }
+
+    .progress-container {
+      margin-top: 20px;
+      height: 20px;
+      width: 100%;
+      background-color: #cfd8dc;
+      border-radius: 10px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background-color: #0288d1;
+      transition: width 0.4s ease;
+    }
+
+    pre {
+      background: #f5f5f5;
+      padding: 12px;
+      text-align: left;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Analyze CSV/XLSX Files from a Directory</h2>
+    <form id="form">
+      <input type="text" name="folder_path" placeholder="Enter folder path" required />
+      <br />
+      <button type="submit">Analyze</button>
+    </form>
+
+    <!-- Progress bar -->
+    <div class="progress-container" id="progressContainer">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div id="output"></div>
+  </div>
+
+  <script>
+    document.getElementById("form").onsubmit = async function(e) {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const progressContainer = document.getElementById("progressContainer");
+      const progressBar = document.getElementById("progressBar");
+      const output = document.getElementById("output");
+
+      progressContainer.style.display = "block";
+      progressBar.style.width = "0%";
+      output.innerHTML = "Processing...";
+
+      const res = await fetch("/analyze", {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await res.json();
+
+      if (data.summaries) {
+        const total = data.summaries.length;
+        output.innerHTML = "";
+        data.summaries.forEach((item, index) => {
+          progressBar.style.width = `${((index + 1) / total) * 100}%`;
+          output.innerHTML += `<h3>${item.file}</h3><pre>${item.summary}</pre>`;
+        });
+      } else {
+        output.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+      }
+
+      progressBar.style.width = "100%";
+    };
+  </script>
+</body>
+</html>
